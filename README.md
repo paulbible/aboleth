@@ -2,6 +2,14 @@
 
 A small project combining Clojure with OpenCV
 
+I'm experimenting in the aboelth.core namespace. I want to move more to the other namespaces:
+
+* cv	OpenCV code
+* vis	Code to view images and visualize signals
+* calc	math operations on signals
+
+Ultimate Goal: Read text from the scan.
+
 # Getting Started
 
 Follow [OpenCV with for Clojure][opencv] to get started.
@@ -14,37 +22,30 @@ You will end up with two jars that need to be included opencv-300.jar and opencv
 Add these jars as dependencies.
 
 ```clojure
-(defproject simple-sample "0.1.0-SNAPSHOT"
-  :description "FIXME: write description"
-  :url "http://example.com/FIXME"
+(defproject aboleth "0.1.0-SNAPSHOT"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :dependencies [[org.clojure/clojure "1.5.1"]
-                 [opencv/opencv "2.4.7"] ; added line
-                 [opencv/opencv-native "2.4.7"]]) ;added line
+  :dependencies [[org.clojure/clojure "1.7.0"]
+                 [opencv/opencv "3.0.0"]
+                 [opencv/opencv-native "3.0.0"]
+                 [incanter "1.5.6"]]
+  :java-source-paths ["src/aboleth"]
+  :injections [(clojure.lang.RT/loadLibrary org.opencv.core.Core/NATIVE_LIBRARY_NAME)])
 ```
 
+Two Classes from image viewing were taken from [JavaOpenCVBook][jviewer].
 
-# Notes
-
-I'm experimenting in the aboelth.core namespace. I want to move more to the other namespaces:
-
-* cv
-* vis
-* calc
-
- 
+The program also uses [incanter][ican].
 
 [opencv]: http://docs.opencv.org/doc/tutorials/introduction/clojure_dev_intro/clojure_dev_intro.html
 [cmake]: http://www.cmake.org/
 [ant]: http://ant.apache.org/
 [lrepo]: https://github.com/kumarshantanu/lein-localrepo
-## Usage
-
-
+[ican]: http://incanter.org/
+[jviewer]: https://github.com/JavaOpenCVBook/code
 ## License
 
-Copyright © 2015 TODO
+Copyright © 2015 
 
 Distributed under the Eclipse Public License either version 1.0 or (at
 your option) any later version.
