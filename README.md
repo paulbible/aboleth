@@ -17,7 +17,7 @@ Follow [OpenCV with for Clojure][opencv] to get started.
 Install OpenCV, [cmake][cmake] is needed. Make sure you have [ant][ant] installed.
 Once OpenCV is installed, install the java bindings. The link above details how to package the native libs as java jars.
 
-You will end up with two jars that need to be included opencv-300.jar and opencv-native-300.jar and libopencv_java247.dylib in the project folder.
+You will end up with two jars that need to be included opencv-300.jar and opencv-native-300.jar and libopencv_java300.dylib in the project folder.
 
 Add these jars as dependencies.
 
@@ -33,7 +33,7 @@ Add these jars as dependencies.
   :injections [(clojure.lang.RT/loadLibrary org.opencv.core.Core/NATIVE_LIBRARY_NAME)])
 ```
 
-Two Classes from image viewing were taken from [JavaOpenCVBook][jviewer].
+Two Classes from image viewing were taken from [JavaOpenCVBook][jviewer]. ImageProcessor and ImageViewer.
 
 The program also uses [incanter][ican].
 
