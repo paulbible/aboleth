@@ -21,6 +21,22 @@
   (cv/imwrite "resources/data/clip-to-text2.png"
               (cv/clip-to-text-area-2 img)))
 
+(defn t-image-append
+  []
+  (let [i1 img-p8
+        i2 img-p9]
+    (cv/image-append i1 i2)))
+
+
+(defn t-tile-images
+  []
+  (let [s1 (cv/sub-image img-p8 0   0   100 100)
+        s2 (cv/sub-image img-p8 100 100 200 200)
+        s3 (cv/sub-image img-p8 200 200 300 300)
+        s4 (cv/sub-image img-p8 300 300 400 400)]
+    (cv/tile-images (list s1 s2 s3 s4))))
+
+
 (def a-mask 
   (cv/get-letter-mask "a" 2 2))
 

@@ -21,6 +21,10 @@
     (doto viewer  
       (.show mat "Image"))))
 
+(defn tile-images
+  "take multiple"
+  [imgs])
+
 ;;
 (defn row-mean-plot
   "return an incanter plot of the list of row means"

@@ -39,7 +39,6 @@
   [vals]
   (istats/variance vals))
 
-
 ;;;;;;;;;;;;;;;;;;;; other operations
 ;;
 (defn pow
