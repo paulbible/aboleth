@@ -14,7 +14,6 @@ import javax.swing.JLabel;
 import javax.swing.JScrollPane;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
-import javax.swing.WindowConstants;
 
 import org.opencv.core.Mat;
 
@@ -45,7 +44,7 @@ public class ImageViewer {
 		final JScrollPane imageScrollPane = new JScrollPane(imageView);
         imageScrollPane.setPreferredSize(new Dimension(640, 480));
         frame.add(imageScrollPane, BorderLayout.CENTER);
-        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		return frame;
 	}
 

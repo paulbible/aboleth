@@ -7,10 +7,6 @@
             [aboleth.calc :as calc])
   (import aboleth.ImageProcessor aboleth.ImageViewer))
 
-
-(def viewer
-  (aboleth.ImageViewer. ))
-
 ;;
 (defn view 
   "view an incanter plot (JChart)"
@@ -21,7 +17,9 @@
 (defn view-image
   "view an incanter plot (JChart)"
   [mat]
-  (.show viewer mat "Title"))
+  (let [viewer (aboleth.ImageViewer.)]
+    (doto viewer  
+      (.show mat "Image"))))
 
 ;;
 (defn row-mean-plot

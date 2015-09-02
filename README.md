@@ -37,12 +37,18 @@ Two Classes from image viewing were taken from [JavaOpenCVBook][jviewer]. ImageP
 
 The program also uses [incanter][ican].
 
+# Links
+[OpenCV Java Docs](http://docs.opencv.org/java/)
+[OpenCV Docs](http://docs.opencv.org/modules/refman.html)
+[Incanter API](http://liebke.github.io/incanter/)
+
 [opencv]: http://docs.opencv.org/doc/tutorials/introduction/clojure_dev_intro/clojure_dev_intro.html
 [cmake]: http://www.cmake.org/
 [ant]: http://ant.apache.org/
 [lrepo]: https://github.com/kumarshantanu/lein-localrepo
 [ican]: http://incanter.org/
 [jviewer]: https://github.com/JavaOpenCVBook/code
+
 ## License
 
 Copyright © 2015 

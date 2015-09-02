@@ -39,14 +39,6 @@
     (cv/laplace-proc)
     (cv/threshold 90)))  
 
-(cv/imwrite 
-  "resources/data/test-8.png" 
-  (cv/clip-to-text-area-2 img-p8))
-
-(cv/imwrite 
-  "resources/data/test-9.png"
-  (cv/clip-to-text-area-2 img-p9))
-
 (def trim-8 
   (cv/imread "resources/data/test-8.png"))
 
@@ -59,6 +51,18 @@
 (cv/imwrite 
   "resources/data/test.png"
   (cv/laplace-proc use-gray))
+
+
+
+(comment
+  
+(cv/imwrite 
+  "resources/data/test-8.png" 
+  (cv/clip-to-text-area-2 img-p8))
+
+(cv/imwrite 
+  "resources/data/test-9.png"
+  (cv/clip-to-text-area-2 img-p9))
 
 
 (def a-scores
@@ -96,7 +100,6 @@
 
 
 
-(comment
 
 
 ;;;;;;;;;;;;;;;;;;;; pre-process image, lapalce 2 rounds
