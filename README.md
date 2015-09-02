@@ -6,15 +6,14 @@ A small project combining Clojure with OpenCV
 
 Follow [OpenCV with for Clojure][opencv] to get started.
 
-Install OpenCV by downloading [cmake][cmake]. Make sure you have [ant][ant] installed.
+Install OpenCV, [cmake][cmake] is needed. Make sure you have [ant][ant] installed.
+Once OpenCV is installed, install the java bindings. The link above details how to package the native libs as java jars.
 
-I think both static and dynamic libraries are needed. You will end up with two jars:
+You will end up with two jars that need to be included opencv-300.jar and opencv-native-300.jar and libopencv_java247.dylib in the project folder.
 
-opencv-300.jar and libopencv_java300.dylib
+Add these jars as dependencies.
 
-Install [localrepo][lrepo] and include opencv-300.jar
-
-`
+```clojure
 (defproject simple-sample "0.1.0-SNAPSHOT"
   :description "FIXME: write description"
   :url "http://example.com/FIXME"
@@ -23,8 +22,16 @@ Install [localrepo][lrepo] and include opencv-300.jar
   :dependencies [[org.clojure/clojure "1.5.1"]
                  [opencv/opencv "2.4.7"] ; added line
                  [opencv/opencv-native "2.4.7"]]) ;added line
-`
+```
 
+
+# Notes
+
+I'm experimenting in the aboelth.core namespace. I want to move more to the other namespaces:
+
+* cv
+* vis
+* calc
 
  
 
