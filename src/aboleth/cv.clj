@@ -1,7 +1,7 @@
 (ns aboleth.cv
   (:require [aboleth.calc :as calc])
   (:import  [org.opencv.core
-             Core CvType Scalar Mat Size Point Rect]
+             Core CvType Scalar Mat Size Point Rect TermCriteria]
             [org.opencv.imgcodecs Imgcodecs]
             [org.opencv.imgproc Imgproc]))
 
@@ -162,7 +162,7 @@
                  (rest carry)
                  (inc n))))))
 
-
+;;
 (defn random-sub-image
   "draw a random sub-image, the same size as the mask"
   [image mask]
@@ -172,9 +172,88 @@
         rand-y (rand-int (- (.rows image) (.rows mask)))]
     (sub-image image (Rect. (Point. rand-x rand-y) (.size mask)))))
 
+;;
+(defn n-random-sub-images
+  "Grabs n random sub images, the same size as mask"
+  [image mask n]
+  (take n (repeatedly #(random-sub-image image mask))))
+
+(defn dump
+  "calls the opencv dump function to pring a matrix"
+  [image]
+  (.dump image))
+
+
+(defn image->row-vec
+  "convert an image Mat to  1xn row vector Mat"
+  [image]
+  (let [dst (.clone image)]
+    (.reshape dst (.channels dst) 1)))
+
+(defn images->row-mat
+  "converts a set of images to 1xn row vectors of n pixels"
+  [images]
+  (let [img (first images)
+        num (count images)
+        vec1 (image->row-vec img)
+        n-pxls (.cols vec1)
+        mat (Mat. num n-pxls (.type img))]
+    (loop [imgs images
+           n 0]
+      (if (empty? imgs)
+        mat
+        (recur (do
+                 (copy-to mat (image->row-vec (first imgs)) 0 n)
+                 (rest imgs))
+               (inc n))))))
+
+(defn label-at 
+  "get the label value at the fiven location"
+  [labels n]
+  (int (aget (.get labels n 0) 0)))
+
+(defn labels->list
+  [labels]
+  (map #(label-at labels %)
+       (range (.rows labels))))
+
+
+(defn kmeans
+  [data labels k iters]
+  (Core/kmeans 
+       data
+       k
+       labels
+       (TermCriteria. )
+       100 
+       Core/KMEANS_PP_CENTERS))
+
+(defn reorder-by-labels
+  [images labels]
+  (let [lbl-list (labels->list labels)
+        pairs (partition 
+                2 
+                (interleave images lbl-list))
+        sorted (sort-by 
+                 :cluster 
+                 (map #(-> (assoc {} :mat (first %))
+                         (assoc :cluster (last %)))
+                      pairs))]
+    (map :mat sorted)))
+
+(defn cluster-images
+  "cluster a set of images using k means"
+  [images k]
+  (let [data (mat->float (images->row-mat images))
+        labels (Mat. (count images) 1 
+                     (.type (first images)))]
+    (do
+      (kmeans data labels k 100)
+      (reorder-by-labels images labels))))
+
+
 
 ;;;;;;;;;;;;;;;;;;;; Processing / Filters
-;;
 (defn laplace
   "apply the lapace filter the src image"
   [src]
@@ -185,7 +264,6 @@
         CvType/CV_8U 3 1 0 Core/BORDER_DEFAULT)
       dst)))
 
-;;
 (defn blur
   "Apply a guassian blur to the image kernel 5 "
   [img]
@@ -195,7 +273,6 @@
       (Imgproc/GaussianBlur img dst (Size. 5 5) 2 2)
       dst)))
 
-;;
 (defn canny
   "Apply a guassian blur to the image kernel 5 "
   ([img]
@@ -213,8 +290,6 @@
         (Imgproc/Canny dst dst t1 (* 2 t1))
         dst))))
 
-
-;;
 (defn threshold
   "filter the image using a threshold"
   [img thresh]
@@ -225,7 +300,6 @@
 
 
 ;;;;;;;;;;;;;;;;;;;; Drawing
-;;
 (defn draw-line
   "draw a line between p1 and p2"
   [img p1 p2]
@@ -234,13 +308,11 @@
       (Imgproc/line dst p1 p2 (Scalar. 255 0 0) 1)
       dst)))
 
-;;
 (defn draw-line!
   "draw a line on the image as a side effect, modify in place"
   [img p1 p2]
   (Imgproc/line img p1 p2 (Scalar. 255 0 0) 1))
 
-;;
 (defn draw-h-line 
   "Draw a horiozntal line returns an image with the line drawn"
   [img y]
@@ -248,7 +320,6 @@
              (Point. 0 y)
              (Point. (.cols img) y)))
 
-;;
 (defn draw-h-line!
   "draw a horizonalt line on the img as a side effect, modify in place"
   [img y]
@@ -267,7 +338,9 @@
          n       (count ys)]
     (if (zero? n)
       img-tmp
-      (recur (draw-h-line img-tmp (first ys-tmp)) (rest ys-tmp) (dec n)))))
+      (recur (draw-h-line img-tmp (first ys-tmp))
+             (rest ys-tmp)
+             (dec n)))))
 
 
 ;;;;;;;;;;;;;;;;;;;; Mat Cnversions
@@ -277,7 +350,7 @@
   [src]
   (let [dst (.clone src)]
     (do
-      (.convertTo src dst CvType/CV_64FC1)
+      (.convertTo src dst CvType/CV_32F)
       dst)))
 
 ;;

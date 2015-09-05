@@ -19,6 +19,7 @@ Ultimate Goal: Read text from the scan.
 
 ```clojure
 (use 'aboleth.core)
+
 (in-ns `aboleth.core)
 
 (vis/view-image img-p8)
@@ -29,8 +30,6 @@ Ultimate Goal: Read text from the scan.
   (-> (cv/blur img-p8)
     (cv/blur)
     (cv/laplace)))
-  
-  
 ```
 ## Installation
 

@@ -27,7 +27,6 @@
         i2 img-p9]
     (cv/image-append i1 i2)))
 
-
 (defn t-tile-images
   []
   (let [s1 (cv/sub-image img-p8 0   0   100 100)
@@ -71,10 +70,35 @@
 (defn t-random-image-2
   []
   (let [mask (cv/sub-image img-p8 0 0 100 100)]
-    (cv/tile-images (conj 
-                      (take 20 (repeatedly #(cv/random-sub-image img-p8 mask)))
-                      mask))))
+    (cv/tile-images 
+      (conj 
+        (take 20 (repeatedly #(cv/random-sub-image img-p8 mask)))
+        mask))))
 
+(defn t-random-image-3
+  []
+  (let [mask (cv/sub-image img-p8 0 0 100 100)]
+    (cv/tile-images 
+      (cv/n-random-sub-images (cv/laplace img-p8)
+                              mask 100))))
+
+(def imgs
+  (cv/n-random-sub-images img-p8 a-mask 100))
+
+(defn t-k-means
+  [k]
+  (let [labels (cv/cluster-images
+                 (cv/n-random-sub-images img-p8 a-mask 1000)
+                 k)]
+    labels))
+
+(defn t-k-means-2
+  [k]
+  (let [post-image (cv/laplace (cv/blur (cv/blur img-p8)))
+        labels (cv/cluster-images
+                 (cv/n-random-sub-images post-image a-mask 1000)
+                 k)]
+    labels))
 
 
 (def a-mask 
@@ -107,8 +131,6 @@
 (cv/imwrite 
   "resources/data/test.png"
   (cv/laplace use-gray))
-
-
 
 (comment
   
