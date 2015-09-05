@@ -60,6 +60,22 @@
     (cv/tile-images (list s1 s2 s3 s4 s5 s6 s7 s8 s9))))
 
 
+(defn t-random-image
+  []
+  (let [mask (cv/sub-image img-p8 0 0 100 100)
+        s1   (cv/random-sub-image img-p8 mask)
+        s2   (cv/random-sub-image img-p8 mask)
+        s3   (cv/random-sub-image img-p8 mask)]
+    (cv/tile-images (list mask s1 s2 s3))))
+
+(defn t-random-image-2
+  []
+  (let [mask (cv/sub-image img-p8 0 0 100 100)]
+    (cv/tile-images (conj 
+                      (take 20 (repeatedly #(cv/random-sub-image img-p8 mask)))
+                      mask))))
+
+
 
 (def a-mask 
   (cv/get-letter-mask "a" 2 2))

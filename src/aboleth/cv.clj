@@ -48,6 +48,7 @@
 
 ;;
 (defn index->xy
+  "take a pixel index and translates it to an (x,y) coordinate"
   [img n]
   (let [x (int (/ n (.cols img)))
         y (mod n (.cols img))]
@@ -80,7 +81,7 @@
       mat)))
 
 ;;
-(defn image-append
+(defn image-c-bind
   "append two images into a new one"
   [img1 img2]
   (let [r1 (.rows img1)
@@ -95,12 +96,27 @@
                                       (.size img2))))
       mat)))
 
+(defn image-r-bind
+  "append two images into a new one"
+  [img1 img2]
+  (let [r1 (.rows img1)
+        c1 (.cols img1)
+        r2 (.rows img2)
+        c2 (.cols img2)
+        mat (Mat. (+ r1 r2) c1 (.type img1))]
+    (do
+      (.copyTo img1  (Mat. mat (Rect. (Point. 0 0)
+                                      (.size img1))))
+      (.copyTo img2  (Mat. mat (Rect. (Point. 0 r1)
+                                      (.size img2))))
+      mat)))
+
 ;;
 (defn calc-tile-mat-size
   "calculate the size of the image by the rows 
-   and columns width and height"
+   and columns width and height, golden ratio ~= 0.618"
   [n w h]
-  (let [c     (int (* n 0.618))
+  (let [c     (inc (int (Math/sqrt n)))
         r     (if (integer? (/ n c)) (/ n c) (inc (int (/ n c))))
         nrows (* r h)
         ncols (* c w)]
@@ -111,8 +127,8 @@
 (defn tile-position-func
   "Creates a function to translate the index to the position"
   [n w h]
-  (let [c     (int (* n 0.618))
-        r     (/ n c)
+  (let [c     (inc (int (Math/sqrt n)))
+        r     (if (integer? (/ n c)) (/ n c) (inc (int (/ n c))))
         nrows (* r h)
         ncols (* c w)]
     (fn [x]
@@ -145,6 +161,16 @@
                           (:y (pos-trans n)))
                  (rest carry)
                  (inc n))))))
+
+
+(defn random-sub-image
+  "draw a random sub-image, the same size as the mask"
+  [image mask]
+  (let [w (.cols image)
+        h (.rows image)
+        rand-x (rand-int (- (.cols image) (.cols mask)))
+        rand-y (rand-int (- (.rows image) (.rows mask)))]
+    (sub-image image (Rect. (Point. rand-x rand-y) (.size mask)))))
 
 
 ;;;;;;;;;;;;;;;;;;;; Processing / Filters
