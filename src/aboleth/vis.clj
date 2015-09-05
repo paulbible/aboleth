@@ -13,6 +13,11 @@
   [chart]
   (icore/view chart))
 
+(defn view-chart
+  "view an incanter plot (JChart)"
+  [chart]
+  (icore/view chart))
+
 ;;
 (defn view-image
   "view an incanter plot (JChart)"
@@ -21,6 +26,7 @@
     (doto viewer  
       (.show mat "Image"))))
 
+;;
 (defn tile-images
   "take multiple"
   [imgs])

@@ -36,6 +36,30 @@
         s4 (cv/sub-image img-p8 300 300 400 400)]
     (cv/tile-images (list s1 s2 s3 s4))))
 
+(defn t-tile-images-2
+  []
+  (let [s1 (cv/sub-image img-p8 0   0   100 100)
+        s2 (cv/sub-image img-p8 100 100 200 200)
+        s3 (cv/sub-image img-p8 200 200 300 300)
+        s4 (cv/sub-image img-p8 300 300 400 400)
+        s5 (cv/sub-image img-p8 400 400 500 500)
+        s6 (cv/sub-image img-p8 500 500 600 600)]
+    (cv/tile-images (list s1 s2 s3 s4 s5 s6))))
+
+(defn t-tile-images-3
+  []
+  (let [s1 (cv/sub-image img-p8 0   0   100 100)
+        s2 (cv/sub-image img-p8 100 100 200 200)
+        s3 (cv/sub-image img-p8 200 200 300 300)
+        s4 (cv/sub-image img-p8 300 300 400 400)
+        s5 (cv/sub-image img-p8 400 400 500 500)
+        s6 (cv/sub-image img-p8 500 500 600 600)
+        s7 (cv/sub-image img-p8 300 300 400 400) 
+        s8 (cv/sub-image img-p8 400 400 500 500)
+        s9 (cv/sub-image img-p8 500 500 600 600)]
+    (cv/tile-images (list s1 s2 s3 s4 s5 s6 s7 s8 s9))))
+
+
 
 (def a-mask 
   (cv/get-letter-mask "a" 2 2))
