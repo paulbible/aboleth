@@ -14,6 +14,7 @@ Ultimate Goal: Read text from the scan.
 ## Usage
 
 `cd aboleth`
+
 `lein repl`
 
 ```clojure
