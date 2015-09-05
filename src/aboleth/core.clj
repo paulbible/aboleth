@@ -92,7 +92,7 @@
 (cv/imwrite 
   "resources/data/test.png"
   (-> (cv/blur (cv/col->gray img-p9))
-    (cv/laplace-proc)
+    (cv/laplace)
     (cv/threshold 90)))  
 
 (def trim-8 
@@ -106,7 +106,7 @@
 
 (cv/imwrite 
   "resources/data/test.png"
-  (cv/laplace-proc use-gray))
+  (cv/laplace use-gray))
 
 
 
@@ -163,9 +163,9 @@
 (def img-laplace
   (-> img-gray
     (cv/blur)
-    (cv/laplace-proc)
+    (cv/laplace)
     (cv/blur)
-    (cv/laplace-proc)))
+    (cv/laplace)))
 
 ;;write image with a lapace filter
 (cv/imwrite

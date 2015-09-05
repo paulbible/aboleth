@@ -175,7 +175,7 @@
 
 ;;;;;;;;;;;;;;;;;;;; Processing / Filters
 ;;
-(defn laplace-proc
+(defn laplace
   "apply the lapace filter the src image"
   [src]
   (let [dst (.clone src)]
@@ -332,26 +332,27 @@
 ;;;;;;;;;;;;;;;;;;;; Row and Column means
 ;;
 (defn img-mean
+  "Calculate the mean value of the image"
   [img]
   (Core/mean img))
 
+;;
+(defn row-mean
+  "get the mean of a row of pixels in the image"
+  [src nrow]
+  (let [row-slice (.row src nrow)]
+    (calc/mean
+      (pmap #(aget (.get row-slice 0 %) 0) 
+            (range (.cols row-slice))))))
 
-    (defn row-mean
-      "get the mean of a row of pixels in the image"
-      [src nrow]
-      (let [row-slice (.row src nrow)]
-        (calc/mean
-          (pmap #(aget (.get row-slice 0 %) 0) 
-                (range (.cols row-slice))))))
-
-    ;;
-    (defn col-mean
-      "get the mean of a col of pixels in the image"
-      [src ncol]
-      (let [col-slice (.col src ncol)]
-        (calc/mean
-          (pmap #(aget (.get col-slice % 0) 0)
-                (range (.cols col-slice))))))
+;;
+(defn col-mean
+  "get the mean of a col of pixels in the image"
+  [src ncol]
+  (let [col-slice (.col src ncol)]
+    (calc/mean
+      (pmap #(aget (.get col-slice % 0) 0)
+            (range (.cols col-slice))))))
 
 ;;
 (defn row-means
@@ -448,7 +449,7 @@
 (defn clip-to-text-area-2
   [img]
   (let [gray (col->gray (.clone img))
-        laplace (laplace-proc (blur (threshold gray 100)))
+        laplace (laplace (blur (threshold gray 100)))
         r-means (calc/sma 5 (row-means laplace))
         c-means (calc/sma 5 (col-means gray))
         tb-pair (clip-ends r-means 0.33)

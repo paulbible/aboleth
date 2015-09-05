@@ -11,6 +11,27 @@ I'm experimenting in the aboelth.core namespace. I want to move more to the othe
 Ultimate Goal: Read text from the scan.
 
 # Getting Started
+## Usage
+
+`cd aboleth`
+`lein repl`
+
+```clojure
+(use 'aboleth.core)
+(in-ns `aboleth.core)
+
+(vis/view-image img-p8)
+
+(vis/view-image (cv/col->gray img-p8))
+
+(vis/view-image 
+  (-> (cv/blur img-p8)
+    (cv/blur)
+    (cv/laplace)))
+  
+  
+```
+## Installation
 
 Follow [OpenCV with for Clojure][opencv] to get started.
 
