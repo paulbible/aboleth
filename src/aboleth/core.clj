@@ -16,6 +16,53 @@
 (def img-p9
   (cv/imread page-9-fname))
 
+(def a-mask 
+  (cv/get-letter-mask "a" 2 2))
+
+;; convert color image to gray scale
+(def img-gray
+  (cv/col->gray img-p8))
+
+;;write the gray image
+(cv/imwrite 
+  "resources/data/gray.png"
+  (cv/canny img-gray 200))
+
+(cv/imwrite 
+  "resources/data/test.png"
+  (-> (cv/blur (cv/col->gray img-p9))
+    (cv/laplace)
+    (cv/threshold 90)))  
+
+(def trim-8 
+  (cv/imread "resources/data/test-8.png"))
+
+(def trim-9 
+  (cv/imread "resources/data/test-9.png"))
+
+(def use-gray
+  (cv/col->gray trim-8))
+
+(cv/imwrite 
+  "resources/data/test.png"
+  (cv/laplace use-gray))
+
+
+;;create an image mask for a letter
+(def a-mask 
+  (cv/get-letter-mask "a" 2 2))
+  
+(vis/view-image a-mask)
+
+(def letter-masks
+  (map #(cv/get-letter-mask (str %) 2 2) 
+       (seq "abcdefghijklmnopqrstuvwxyz")))
+       
+(vis/view-image (second letter-masks)) 
+
+
+;;;;;;;;;;;;;; Tests
+
 (defn t-clip-to-text-area 
   [img]
   (cv/imwrite "resources/data/clip-to-text2.png"
@@ -94,44 +141,22 @@
 
 (defn t-k-means-2
   [k]
-  (let [post-image (cv/laplace (cv/blur (cv/blur img-p8)))
-        labels (cv/cluster-images
-                 (cv/n-random-sub-images post-image a-mask 1000)
-                 k)]
-    labels))
+  (let [post-image    (cv/laplace (cv/blur (cv/blur img-p8)))
+        sorted-images (cv/cluster-images
+                        (cv/n-random-sub-images post-image a-mask 1000)
+                        k)]
+    sorted-images))
+
+(defn t-svm
+  [k]
+  (let [post-image    (cv/laplace (cv/blur (cv/blur img-p8)))
+        samples       (cv/n-random-sub-images post-image a-mask 1000)  
+        sorted-images (cv/cluster-images samples k)
+        svm           (cv/svm samples sorted-images)]
+    svm))
 
 
-(def a-mask 
-  (cv/get-letter-mask "a" 2 2))
-
-;; convert color image to gray scale
-(def img-gray
-  (cv/col->gray img-p8))
-
-;;write the gray image
-(cv/imwrite 
-  "resources/data/gray.png"
-  (cv/canny img-gray 200))
-
-(cv/imwrite 
-  "resources/data/test.png"
-  (-> (cv/blur (cv/col->gray img-p9))
-    (cv/laplace)
-    (cv/threshold 90)))  
-
-(def trim-8 
-  (cv/imread "resources/data/test-8.png"))
-
-(def trim-9 
-  (cv/imread "resources/data/test-9.png"))
-
-(def use-gray
-  (cv/col->gray trim-8))
-
-(cv/imwrite 
-  "resources/data/test.png"
-  (cv/laplace use-gray))
-
+;;;;;;;;;;;;;;;; Commented out
 (comment
   
 (cv/imwrite 
@@ -173,12 +198,6 @@
            x (first p)
            y (second p)]
      (cv/matched-region use-gray a-mask x y)))
-
-
-
-
-
-
 
 ;;;;;;;;;;;;;;;;;;;; pre-process image, lapalce 2 rounds
 ;; apply laplace filter
@@ -233,11 +252,6 @@
       (cv/draw-h-lines! tmp row-indexes)
       tmp)))
             
-
-
-
-
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;  Letter mask stuff
@@ -257,9 +271,6 @@
             (cv/matched-region 
               img-gray a-mask 500 500))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

@@ -7,7 +7,6 @@
             [aboleth.calc :as calc])
   (import aboleth.ImageProcessor aboleth.ImageViewer))
 
-;;
 (defn view 
   "view an incanter plot (JChart)"
   [chart]
@@ -18,7 +17,6 @@
   [chart]
   (icore/view chart))
 
-;;
 (defn view-image
   "view an incanter plot (JChart)"
   [mat]
@@ -26,12 +24,10 @@
     (doto viewer  
       (.show mat "Image"))))
 
-;;
 (defn tile-images
   "take multiple"
   [imgs])
 
-;;
 (defn row-mean-plot
   "return an incanter plot of the list of row means"
   ([img]
@@ -48,7 +44,6 @@
           y (cv/row-means img s e)]
       (icharts/xy-plot x y))))
 
-;;
 (defn col-mean-plot 
   "return an incanter plot of the list of col means"
   ([img]
@@ -65,14 +60,12 @@
           y (cv/col-means img s e)]
       (icharts/xy-plot x y))))
 
-;;
 (defn signal-plot
   "Plot a signal, a list of values"
   [vals]
   (let [x (range (count vals))]
       (icharts/xy-plot x vals)))
 
-;;
 (defn add-signal
   "adds a plot of the signal to the given chart"
   [chart vals]

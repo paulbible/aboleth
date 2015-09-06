@@ -5,22 +5,17 @@
             [org.opencv.imgcodecs Imgcodecs]
             [org.opencv.imgproc Imgproc]))
 
-
-
 ;;;;;;;;;;;;;;;;;;;; Utility
-;;
 (defn imread
   "returns a cv Mat of the image at fname"
   [fname] 
   (Imgcodecs/imread fname))
 
-;;
 (defn imwrite
   "writes the image Mat to fname"
   [fname img]
   (Imgcodecs/imwrite fname img))
 
-;;
 (defn col->gray 
   "Convenient color to gray convertions for cv Mat"
   [src]
@@ -29,8 +24,24 @@
       (Imgproc/cvtColor src dst Imgproc/COLOR_RGB2GRAY)
       dst)))
 
+;;;;;;;;;;;;;;;;;;;; Mat Cnversions
+(defn mat->float
+  "convert an image Mat to float representation (0 - 255 int to float)"
+  [src]
+  (let [dst (.clone src)]
+    (do
+      (.convertTo src dst CvType/CV_32F)
+      dst)))
+
+(defn norm-255
+  "Convert to float and devide by 255, represent as percentage"
+  [src]
+  (let [dst (.clone src)]
+    (do
+      (Core/divide (mat->float src) (Scalar. 255.0) dst)
+      dst)))
+
 ;; imgae operations
-;;
 (defn img-get 
   "get the values of a point in the image"
   [img x y]
@@ -38,7 +49,6 @@
     (map #(aget col-vals  %) 
          (range (alength col-vals)))))
 
-;;
 (defn sub-image
   "get the sub image defined by the image and rect"
   ([image rect]
@@ -46,7 +56,6 @@
   ([image p1x p1y p2x p2y]
     (Mat. image (Rect. (Point. p1x p1y) (Point. p2x p2y)))))
 
-;;
 (defn index->xy
   "take a pixel index and translates it to an (x,y) coordinate"
   [img n]
@@ -54,7 +63,6 @@
         y (mod n (.cols img))]
     (list x y)))
 
-;;
 (defn copy-to 
   "capy the tile to the image and return it"
   [img tile-image x y]
@@ -63,8 +71,6 @@
       (Mat. img (Rect. (Point. x y) (.size tile-image))))
     img))
 
-
-;;
 (defn image-append
   "append two images into a new one"
   [img1 img2]
@@ -80,7 +86,6 @@
                                       (.size img2))))
       mat)))
 
-;;
 (defn image-c-bind
   "append two images into a new one"
   [img1 img2]
@@ -111,7 +116,15 @@
                                       (.size img2))))
       mat)))
 
-;;
+(defn max-size
+  "returns a size that can contain the largest mat size (w, h)"
+  [images]
+  (let [ws (map #(.cols %) images)
+        hs (map #(.rows %) images)]
+    (Mat. (Size. (reduce max ws)
+                 (reduce max hs))
+          (.type (first images)))))
+
 (defn calc-tile-mat-size
   "calculate the size of the image by the rows 
    and columns width and height, golden ratio ~= 0.618"
@@ -123,7 +136,6 @@
     {:rows nrows 
      :cols ncols}))
 
-;;
 (defn tile-position-func
   "Creates a function to translate the index to the position"
   [n w h]
@@ -137,7 +149,6 @@
       (-> (assoc {} :x (* temp-c w))
         (assoc :y (* temp-r h)))))))
       
-;;
 (defn tile-images
   "Tile many smaller images onto a larger image,
    assumes they are the same size
@@ -145,11 +156,11 @@
   [imgs]
   (let [n (count imgs)
         img-vec (vec (reverse imgs))
-        img1 (first imgs)
+        img1 (max-size imgs)
         w (.cols img1)
         h (.rows img1)
         dims (calc-tile-mat-size n w h)
-        mat (Mat. (:rows dims) (:cols dims) (.type img1))
+        mat (Mat. (:rows dims) (:cols dims) (.type img1) (Scalar. 0 0 0))
         pos-trans (tile-position-func n w h)]
       (loop [dst mat
              carry imgs
@@ -162,7 +173,6 @@
                  (rest carry)
                  (inc n))))))
 
-;;
 (defn random-sub-image
   "draw a random sub-image, the same size as the mask"
   [image mask]
@@ -172,7 +182,6 @@
         rand-y (rand-int (- (.rows image) (.rows mask)))]
     (sub-image image (Rect. (Point. rand-x rand-y) (.size mask)))))
 
-;;
 (defn n-random-sub-images
   "Grabs n random sub images, the same size as mask"
   [image mask n]
@@ -182,7 +191,6 @@
   "calls the opencv dump function to pring a matrix"
   [image]
   (.dump image))
-
 
 (defn image->row-vec
   "convert an image Mat to  1xn row vector Mat"
@@ -207,6 +215,7 @@
                  (rest imgs))
                (inc n))))))
 
+;;;;;;;;;;;;;;;;;;;;; Machine Learning
 (defn label-at 
   "get the label value at the fiven location"
   [labels n]
@@ -217,16 +226,26 @@
   (map #(label-at labels %)
        (range (.rows labels))))
 
-
-(defn kmeans
+(defn kmeans-call
   [data labels k iters]
   (Core/kmeans 
        data
        k
        labels
        (TermCriteria. )
-       100 
+       iters 
        Core/KMEANS_PP_CENTERS))
+
+(defn kmeans
+  "cluster a set of images using k means, 
+   returns an nx1 column vector of labels"
+  [images k]
+  (let [data (mat->float (images->row-mat images))
+        labels (Mat. (count images) 1 
+                     (.type (first images)))]
+    (do
+      (kmeans-call data labels k 100)
+      labels)))
 
 (defn reorder-by-labels
   [images labels]
@@ -244,14 +263,16 @@
 (defn cluster-images
   "cluster a set of images using k means"
   [images k]
-  (let [data (mat->float (images->row-mat images))
-        labels (Mat. (count images) 1 
-                     (.type (first images)))]
-    (do
-      (kmeans data labels k 100)
-      (reorder-by-labels images labels))))
+  (reorder-by-labels 
+    images 
+    (kmeans images k)))
 
 
+
+(defn svm
+  "Train an svm classifier using samples and labels"
+  [training-set labels]
+  labels)
 
 ;;;;;;;;;;;;;;;;;;;; Processing / Filters
 (defn laplace
@@ -343,29 +364,8 @@
              (dec n)))))
 
 
-;;;;;;;;;;;;;;;;;;;; Mat Cnversions
-;;
-(defn mat->float
-  "convert an image Mat to float representation (not 0 - 255)"
-  [src]
-  (let [dst (.clone src)]
-    (do
-      (.convertTo src dst CvType/CV_32F)
-      dst)))
-
-;;
-(defn norm-255
-  "Convert to float and devide by 255, represent as percentage"
-  [src]
-  (let [dst (.clone src)]
-    (do
-      (Core/divide (mat->float src) (Scalar. 255.0) dst)
-      dst)))
-
-
 ;;;;;;;;;;;;;;;;;;;; Letter mask, subregion, score
-;;
-(defn get-letter-mask
+(defn get-letter-mask-2
   "get a letter mask for the given string"
   [letter scale thickness]
   (let [baseline (int-array 1)
@@ -374,19 +374,59 @@
                    scale thickness baseline)
         mat      (Mat. size CvType/CV_8U (Scalar. 0.0))]
     (do
+      (println (aget baseline 0))
       (Imgproc/putText 
         mat letter 
-        (Point. 0 (.rows mat)) Core/FONT_HERSHEY_PLAIN scale (Scalar. 255 255 255) thickness)
+        (Point. 0
+                (.height size)) 
+        Core/FONT_HERSHEY_PLAIN scale (Scalar. 255 255 255) thickness)
       mat)))
 
-;;
+(defn t-letter-mask
+  []
+  (let [baseline (int-array 1)
+        letter "g"
+        size (Imgproc/getTextSize 
+                   letter Core/FONT_HERSHEY_PLAIN
+                   2 2 baseline)
+        mat (Mat. (Size. (.width size) (+ (.height size) (aget baseline 0))) CvType/CV_8U)
+        ;;mat (Mat. (Size. 30 30) CvType/CV_8U)
+        txt-orig  (Point. (/ (- (.cols mat) (.width size)) 2)
+                          (/ (+ (.rows mat) (.height size)) 2))]
+    (do
+      (Imgproc/putText
+        mat letter 
+        txt-orig
+        Core/FONT_HERSHEY_PLAIN 2 (Scalar. 255 255 255) 2)
+      mat)))
+
+(defn get-letter-mask
+  "get a letter mask for the given string"
+  [letter scale thickness]
+  (let [baseline (int-array 1)
+        size (Imgproc/getTextSize 
+                   letter Core/FONT_HERSHEY_PLAIN
+                   scale thickness baseline)
+        mat (Mat. (Size. (.width size) 
+                         (+ (.height size) (aget baseline 0)))
+                  CvType/CV_8U
+                  (Scalar. 0 0 0))
+        ;;mat (Mat. (Size. 30 30) CvType/CV_8U)
+        txt-orig  (Point. (/ (- (.cols mat) (.width size)) 2)
+                          (/ (+ (.rows mat) (.height size)) 2))]
+    (do
+      (Imgproc/putText
+        mat letter 
+        txt-orig
+        Core/FONT_HERSHEY_PLAIN scale (Scalar. 255 255 255) thickness)
+      mat)))
+
 (defn matched-region 
   "grab the sub section of the source image at the point x y"
   [src mask x y]
   (let [rect (Rect. (Point. x y) (.size mask))]
     (Mat. src rect)))
 
-;;
 (defn score
   "score the mask against the src image"
   [src mask]
@@ -398,12 +438,7 @@
       (aget (.val (Core/sumElems temp)) 0))))
 
 
-
-
-
-
 ;;;;;;;;;;;;;;;;;;;; Row and Column means
-;;
 (defn img-mean
   "Calculate the mean value of the image"
   [img]
@@ -418,7 +453,6 @@
       (pmap #(aget (.get row-slice 0 %) 0) 
             (range (.cols row-slice))))))
 
-;;
 (defn col-mean
   "get the mean of a col of pixels in the image"
   [src ncol]
@@ -427,7 +461,6 @@
       (pmap #(aget (.get col-slice % 0) 0)
             (range (.cols col-slice))))))
 
-;;
 (defn row-means
   "Calculate a list of row means
    from 0 to nrows or a range"
@@ -440,7 +473,6 @@
   ([img]
     (row-means img 0 (.rows img))))
 
-;;
 (defn col-means
   "Calculate a list of col means
     from 0 to ncols or a range"
@@ -455,7 +487,6 @@
 
 
 ;;;;;;;;;;;;;;;;;;;; pre-processing
-;;
 (defn min-in
   "find the min value within the given percentile"
   [vals percent]
@@ -463,14 +494,12 @@
     min 
     (take (int (* percent (count vals))) vals)))
 
-;;
 (defn clip-index
   "find the index of the min within the percentile"
   [vals percent]
   (let [target (min-in vals 0.33)]
     (first (calc/which vals #(= target %)))))
 
-;;
 (defn clip-index-rev
   "find the index of the min within the percentile of a reversed list"
   [vals percent]
@@ -479,7 +508,6 @@
     (- (count vals)
       (first (calc/which rev-vals #(= target %))))))
 
-;;
 (defn clip-ends
   "get the top and bottom mins for clipping"
   [vals percent]
@@ -487,7 +515,6 @@
         b-row (clip-index-rev vals 0.33)]
     (list t-row b-row)))
 
-;;
 (defn trim-tb
   "takes and image and trips it at the min points on the top and bottom"
   [img vals percent]
@@ -497,7 +524,6 @@
     (sub-image img 0           t-row 
                    (.cols img) b-row)))
 
-;;
 (defn trim-lr
   "takes and image and trips it at the min points on the top and bottom"
   [img vals percent]
@@ -507,7 +533,6 @@
       (sub-image img l-col 0 
                      r-col (.rows img))))
 
-;;
 (defn clip-to-text-area
   [img]
   (let [gray (col->gray (.clone img))
@@ -532,4 +557,4 @@
                (last lr-pair)  (last tb-pair))))
 
 
-  ;; End of file
+ ;; End of file

@@ -22,14 +22,46 @@ Ultimate Goal: Read text from the scan.
 
 (in-ns `aboleth.core)
 
+;;view an image
 (vis/view-image img-p8)
 
+;;convert from color to gray scale
 (vis/view-image (cv/col->gray img-p8))
 
+;;Apply multiple filters sequentially
 (vis/view-image 
   (-> (cv/blur img-p8)
     (cv/blur)
     (cv/laplace)))
+    
+;;create an image mask for a letter
+(def a-mask 
+  (cv/get-letter-mask "a" 2 2))
+  
+(vis/view-image a-mask)
+
+;;generate letter masks
+(def letter-masks
+  (map #(cv/get-letter-mask (str %) 2 2) 
+       (seq "abcdefghijklmnopqrstuvwxyz0123456789()[]~!@#$%^&*_+-=")))
+       
+(vis/view-image 
+  (cv/tile-images letter-masks))
+
+;;get random samples of size mask
+(def samples
+  (cv/n-random-sub-images img-p8 a-mask 500))
+  
+(vis/view-image
+  (cv/tile-images
+    samples))
+
+;;cluster samples using k means
+(vis/view-image
+  (cv/tile-images
+    (cv/cluster-images samples 5)))
+    
+    
 ```
 ## Installation
 
@@ -62,6 +94,7 @@ The program also uses [incanter][ican].
 * [OpenCV Java Docs](http://docs.opencv.org/java/)
 * [OpenCV Docs](http://docs.opencv.org/modules/refman.html)
 * [Incanter API](http://liebke.github.io/incanter/)
+* [Machine Learning tutorial for OpenCV](http://bytefish.de/blog/machine_learning_opencv/)
 
 [opencv]: http://docs.opencv.org/doc/tutorials/introduction/clojure_dev_intro/clojure_dev_intro.html
 [cmake]: http://www.cmake.org/
