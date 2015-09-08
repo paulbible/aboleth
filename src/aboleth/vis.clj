@@ -24,9 +24,12 @@
     (doto viewer  
       (.show mat "Image"))))
 
-(defn tile-images
-  "take multiple"
-  [imgs])
+(defn view-tiles
+  "View the tiles in a composit image"
+  [images]
+  (let [viewer (aboleth.ImageViewer.)]
+    (doto viewer  
+      (.show (cv/tile-images images) "Image"))))
 
 (defn row-mean-plot
   "return an incanter plot of the list of row means"

@@ -149,11 +149,50 @@
 
 (defn t-svm
   [k]
-  (let [post-image    (cv/laplace (cv/blur (cv/blur img-p8)))
-        samples       (cv/n-random-sub-images post-image a-mask 1000)  
-        sorted-images (cv/cluster-images samples k)
-        svm           (cv/svm samples sorted-images)]
-    svm))
+  (let [post-image  img-p8
+        samples    (cv/n-random-sub-images post-image a-mask 500)  
+        labels     (cv/kmeans samples k)
+        svm        (cv/svm samples labels)
+        test-set   (cv/n-random-sub-images post-image a-mask 500)]
+    (cv/svm-predict svm test-set)))
+
+(def svm-5-class
+  (let [post-image  img-p8
+        samples    (cv/n-random-sub-images post-image a-mask 500)  
+        labels     (cv/kmeans samples 5)]
+    (cv/svm samples labels)))
+
+
+(def pts 
+  (take 10000 (repeatedly #(cv/random-tile-pos img-p9 a-mask))))
+
+(def pts-imgs
+  (map #(cv/sub-image-at img-p9 a-mask %) pts))
+
+(def pts-labels
+  (map #(cv/svm-predict-image 
+          svm-5-class (cv/col->gray %)) pts-imgs))
+
+(def pair
+  (first (partition 2 (interleave pts pts-labels))))
+
+(def pair-2
+  (second (partition 2 (interleave pts pts-labels))))
+
+(defn t-svm-2
+  [k]
+  (let [train-points (cv/n-random-sub-images img-p8 a-mask 500)
+        c-labels      (cv/kmeans train-points k)
+        svm           (cv/svm train-points c-labels) 
+        test-points (take 10000 
+                          (repeatedly #(cv/random-tile-pos img-p8 a-mask)))
+        tiles       (map #(cv/sub-image-at img-p8 a-mask %) test-points)
+        labels      (map #(cv/svm-predict-image 
+                            svm (cv/col->gray %)) tiles)]
+     (vis/view-image
+       (cv/mark-clusters
+             img-p8 a-mask test-points labels))))
+
 
 
 ;;;;;;;;;;;;;;;; Commented out

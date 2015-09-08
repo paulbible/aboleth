@@ -3,7 +3,9 @@
   (:import  [org.opencv.core
              Core CvType Scalar Mat Size Point Rect TermCriteria]
             [org.opencv.imgcodecs Imgcodecs]
-            [org.opencv.imgproc Imgproc]))
+            [org.opencv.imgproc Imgproc]
+            [org.opencv.ml SVM StatModel Ml]))
+
 
 ;;;;;;;;;;;;;;;;;;;; Utility
 (defn imread
@@ -20,9 +22,11 @@
   "Convenient color to gray convertions for cv Mat"
   [src]
   (let [dst (.clone src)]
-    (do 
-      (Imgproc/cvtColor src dst Imgproc/COLOR_RGB2GRAY)
-      dst)))
+      (if (= 1 (.channels src))
+        dst
+        (do
+          (Imgproc/cvtColor src dst Imgproc/COLOR_RGB2GRAY)
+          dst))))
 
 ;;;;;;;;;;;;;;;;;;;; Mat Cnversions
 (defn mat->float
@@ -31,6 +35,14 @@
   (let [dst (.clone src)]
     (do
       (.convertTo src dst CvType/CV_32F)
+      dst)))
+
+(defn mat->scalar
+  "convert an image Mat to scalar representation (0 - 255 int to float)"
+  [src]
+  (let [dst (.clone src)]
+    (do
+      (.convertTo src dst CvType/CV_32S)
       dst)))
 
 (defn norm-255
@@ -55,6 +67,12 @@
     (Mat. image rect))
   ([image p1x p1y p2x p2y]
     (Mat. image (Rect. (Point. p1x p1y) (Point. p2x p2y)))))
+
+(defn matched-region 
+  "grab the sub section of the source image at the point x y"
+  [src mask x y]
+  (let [rect (Rect. (Point. x y) (.size mask))]
+    (Mat. src rect)))
 
 (defn index->xy
   "take a pixel index and translates it to an (x,y) coordinate"
@@ -173,6 +191,21 @@
                  (rest carry)
                  (inc n))))))
 
+(defn random-tile-pos
+  "draw a random sub-image, the same size as the mask"
+  [image mask]
+  (let [w (.cols image)
+        h (.rows image)
+        rand-x (rand-int (- (.cols image) (.cols mask)))
+        rand-y (rand-int (- (.rows image) (.rows mask)))]
+    (-> (assoc {} :x rand-x)
+      (assoc :y rand-y))))
+
+(defn sub-image-at
+  [image mask pos]
+  (sub-image image
+             (Rect. (Point. (:x pos) (:y pos)) (.size mask))))
+
 (defn random-sub-image
   "draw a random sub-image, the same size as the mask"
   [image mask]
@@ -181,6 +214,8 @@
         rand-x (rand-int (- (.cols image) (.cols mask)))
         rand-y (rand-int (- (.rows image) (.rows mask)))]
     (sub-image image (Rect. (Point. rand-x rand-y) (.size mask)))))
+
+
 
 (defn n-random-sub-images
   "Grabs n random sub images, the same size as mask"
@@ -267,12 +302,97 @@
     images 
     (kmeans images k)))
 
+(defn mat->stat-format
+  "convert an image Mat to the right format for svm"
+  [src]
+  (let [dst (.clone src)]
+    (do
+      (.convertTo src dst CvType/CV_32F)
+      dst)))
+
+(defn cluster->color
+  [cluster]
+  (cond
+    (= 0 cluster) (Scalar.   0     0    0)
+    (= 1 cluster) (Scalar. 255     0    0)
+    (= 2 cluster) (Scalar.   0   255    0)
+    (= 3 cluster) (Scalar.   0     0  255)
+    (= 4 cluster) (Scalar. 255     0  255)))
+
+(defn mark-cluster
+  [image mask pos k]
+  (let [dst (.clone image)]
+    (copy-to dst 
+             (Mat. (.size mask) (.type image) (cluster->color k)) 
+             (:x pos) (:y pos))))
+
+(defn mark-clusters-2
+  "Draw horizontal lines at a list of rows"
+  [img mask points labels]
+  (loop [img-tmp img
+         ps-tmp  points
+         lab-tmp labels]
+    (if (empty? ps-tmp)
+      img-tmp
+      (recur (mark-cluster img-tmp mask (first ps-tmp) (int (first lab-tmp)))
+             (rest ps-tmp)
+             (rest lab-tmp)))))
+
+(defn mark-clusters
+  "Draw horizontal lines at a list of rows"
+  [img mask points labels]
+  (let [dst (.clone img)]
+    (loop [img-tmp dst
+           ps-tmp  points
+           lab-tmp labels]
+      (if (empty? ps-tmp)
+        dst
+        (recur (do
+                 (copy-to 
+                   dst 
+                   (Mat. (.size mask) (.type dst) (cluster->color (first lab-tmp)))
+                   (:x (first ps-tmp)) 
+                   (:y (first ps-tmp)))
+                 dst)
+               (rest ps-tmp)
+               (rest lab-tmp))))))
+
+
 
 
 (defn svm
   "Train an svm classifier using samples and labels"
   [training-set labels]
-  labels)
+  (let [data-rows (images->row-mat training-set)
+        data      (mat->stat-format (col->gray data-rows))
+        svm-model (doto (SVM/create )
+                    (.setType SVM/C_SVC)
+                    (.setKernel SVM/LINEAR))]
+    (do
+      (.train svm-model data Ml/ROW_SAMPLE labels)
+      svm-model)))
+
+(defn svm-predict-labels
+  [model test-set]
+  (let [data-rows (images->row-mat test-set)
+        data      (mat->stat-format (col->gray data-rows))
+        labels    (Mat. (count test-set) 1 
+                        (.type (first test-set)))]
+  (do
+    (.predict model data labels Ml/ROW_SAMPLE)
+    labels)))
+
+(defn svm-predict-image
+  [model image]
+  (let [data-rows (image->row-vec image)
+        data      (mat->stat-format data-rows)]
+      (int (.predict model data))))
+
+(defn svm-predict
+  "Train an svm classifier using samples and labels"
+  [model test-set]
+  (let [labels (svm-predict-labels model test-set)]
+    (reorder-by-labels test-set labels)))
 
 ;;;;;;;;;;;;;;;;;;;; Processing / Filters
 (defn laplace
@@ -420,12 +540,6 @@
         txt-orig
         Core/FONT_HERSHEY_PLAIN scale (Scalar. 255 255 255) thickness)
       mat)))
-
-(defn matched-region 
-  "grab the sub section of the source image at the point x y"
-  [src mask x y]
-  (let [rect (Rect. (Point. x y) (.size mask))]
-    (Mat. src rect)))
 
 (defn score
   "score the mask against the src image"
