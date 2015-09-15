@@ -156,6 +156,7 @@
         test-set   (cv/n-random-sub-images post-image a-mask 500)]
     (cv/svm-predict svm test-set)))
 
+
 (def svm-5-class
   (let [post-image  img-p8
         samples    (cv/n-random-sub-images post-image a-mask 500)  
@@ -192,6 +193,59 @@
      (vis/view-image
        (cv/mark-clusters
              img-p8 a-mask test-points labels))))
+
+
+(def laplace
+  (-> img-p8
+    (cv/laplace)))
+
+(def train-points
+  (cv/n-random-sub-images laplace a-mask 500))
+
+(def svm-3-laplace
+  (cv/svm train-points (cv/kmeans train-points 3)))
+
+(def test-points
+  (take 10000 
+        (repeatedly #(cv/random-tile-pos laplace a-mask))))
+
+(def tiles
+  (map #(cv/sub-image-at laplace a-mask %) test-points))
+
+(def labels
+  (map #(cv/svm-predict-image 
+          svm-3-laplace (cv/col->gray %)) tiles))
+
+(vis/view-image
+  (let [x1 70
+        y1 70
+        x2 (- (.width img-p8) 150)
+        y2 (- (.height img-p8) 200)
+        use-img (cv/laplace (cv/blur img-p8))
+        tmp (cv/sub-image use-img x1 y1 x2 y2)]
+    (do
+      (println (/ (cv/sum tmp) (cv/area tmp)))
+      (cv/draw-rect use-img x1 y1 x2 y2 "blue"))))
+
+
+
+
+(defn t-new-clip
+  [img]
+  (let [use-img (cv/laplace img)
+        rms     (cv/row-means img)
+        cms     (cv/col-means img)]
+    (do
+      (vis/view
+        (vis/signal-plot rms))
+      (vis/view
+        (vis/signal-plot cms))
+      (vis/view-image use-img))))
+
+
+
+
+
 
 
 
@@ -310,13 +364,5 @@
             (cv/matched-region 
               img-gray a-mask 500 500))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(def img-top
-  (cv/sub-image img-laplace 0 0 (.cols img-laplace) 300))
-
-(cv/imwrite "resources/data/top.png"
-            img-top)
 
 );;comment block

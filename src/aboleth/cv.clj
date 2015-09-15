@@ -68,6 +68,23 @@
   ([image p1x p1y p2x p2y]
     (Mat. image (Rect. (Point. p1x p1y) (Point. p2x p2y)))))
 
+(defn sub-image-at
+  [image mask pos]
+  (sub-image image
+             (Rect. (Point. (:x pos) (:y pos)) (.size mask))))
+
+(defn sum
+  [image]
+  (aget (.val (Core/sumElems image)) 0))
+
+(defn area
+  [image]
+  (* (.width image) (.height image)))
+
+(defn size->map
+  [image]
+  image)
+
 (defn matched-region 
   "grab the sub section of the source image at the point x y"
   [src mask x y]
@@ -201,10 +218,7 @@
     (-> (assoc {} :x rand-x)
       (assoc :y rand-y))))
 
-(defn sub-image-at
-  [image mask pos]
-  (sub-image image
-             (Rect. (Point. (:x pos) (:y pos)) (.size mask))))
+
 
 (defn random-sub-image
   "draw a random sub-image, the same size as the mask"
@@ -358,6 +372,16 @@
                (rest lab-tmp))))))
 
 
+(defn gabor
+  "Run a gobor filter over the image"
+  [image]
+  (let [dst (col->gray (.clone image))]
+    (do
+      (Imgproc/filter2D dst dst -1
+        (Imgproc/getGaborKernel (Size. 9 9) 1 (* 3.14 0.75) 1 1))
+      dst)))
+
+
 
 
 (defn svm
@@ -441,6 +465,16 @@
 
 
 ;;;;;;;;;;;;;;;;;;;; Drawing
+(defn color
+  [col-str]
+  (cond
+    (= "red" col-str)   (Scalar. 0     0 255)
+    (= "green" col-str) (Scalar. 0   255   0)
+    (= "blue" col-str)  (Scalar. 255   0   0)
+    (= "black" col-str) (Scalar. 0     0   0)
+    (= "white" col-str) (Scalar. 255 255 255)
+    :else (Scalar. 0     0   0)))
+
 (defn draw-line
   "draw a line between p1 and p2"
   [img p1 p2]
@@ -449,10 +483,16 @@
       (Imgproc/line dst p1 p2 (Scalar. 255 0 0) 1)
       dst)))
 
+(defn point
+  [x y]
+  (Point. x y))
+
 (defn draw-line!
   "draw a line on the image as a side effect, modify in place"
-  [img p1 p2]
-  (Imgproc/line img p1 p2 (Scalar. 255 0 0) 1))
+  ([img p1 p2]
+    (Imgproc/line img p1 p2 (Scalar. 0 0 0) 1))
+  ([img p1 p2 col]
+    (Imgproc/line img p1 p2 (color col) 1)))
 
 (defn draw-h-line 
   "Draw a horiozntal line returns an image with the line drawn"
@@ -482,6 +522,24 @@
       (recur (draw-h-line img-tmp (first ys-tmp))
              (rest ys-tmp)
              (dec n)))))
+
+
+(defn draw-rect
+  "draw a rectangle on the image"
+  ([img x1 y1 x2 y2]
+    (do
+      (draw-line! img (Point. x1 y1) (Point. x2 y1)) ;; top
+      (draw-line! img (Point. x1 y1) (Point. x1 y2)) ;; left
+      (draw-line! img (Point. x2 y1) (Point. x2 y2)) ;; right
+      (draw-line! img (Point. x1 y2) (Point. x2 y2)) ;; bottom
+      img))
+  ([img x1 y1 x2 y2 col]
+    (do
+      (draw-line! img (Point. x1 y1) (Point. x2 y1) col) ;; top
+      (draw-line! img (Point. x1 y1) (Point. x1 y2) col) ;; left
+      (draw-line! img (Point. x2 y1) (Point. x2 y2) col) ;; right
+      (draw-line! img (Point. x1 y2) (Point. x2 y2) col) ;; bottom
+      img)))
 
 
 ;;;;;;;;;;;;;;;;;;;; Letter mask, subregion, score
