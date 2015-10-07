@@ -4,7 +4,8 @@
              Core CvType Scalar Mat Size Point Rect TermCriteria]
             [org.opencv.imgcodecs Imgcodecs]
             [org.opencv.imgproc Imgproc]
-            [org.opencv.ml SVM StatModel Ml]))
+            [org.opencv.ml SVM StatModel Ml])
+  (import aboleth.ImageProcessor aboleth.ImageViewer))
 
 
 ;;;;;;;;;;;;;;;;;;;; Utility
@@ -52,6 +53,12 @@
     (do
       (Core/divide (mat->float src) (Scalar. 255.0) dst)
       dst)))
+
+(defn mat->buffered-image
+  "convert a matring to a buffered image for use by java"
+  [img]
+  (let [proccessor (aboleth.ImageProcessor.)]
+      (.toBufferedImage proccessor img)))
 
 ;; imgae operations
 (defn img-get 

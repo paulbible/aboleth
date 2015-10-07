@@ -5,7 +5,13 @@
             [incanter.optimize :as iopt]
             [aboleth.cv :as cv]
             [aboleth.calc :as calc])
-  (import aboleth.ImageProcessor aboleth.ImageViewer))
+  (import aboleth.ImageProcessor
+          aboleth.ImageViewer
+          java.awt.Font
+          java.awt.Font
+          java.awt.image.BufferedImage
+          java.lang.String
+          java.lang.Character))
 
 (defn view 
   "view an incanter plot (JChart)"
@@ -23,6 +29,26 @@
   (let [viewer (aboleth.ImageViewer.)]
     (doto viewer  
       (.show mat "Image"))))
+
+(defn draw-text
+  "draw text on the buffered image (java side)
+   accepts instance of BufferedImage
+   call cv/mat->buffered-image first"
+  ([^BufferedImage image text x y point-size]
+    (let [buffered-image (cv/mat->buffered-image image)
+          gfx            (doto (.getGraphics buffered-image)
+                           (.setFont (Font. "Arial Black" Font/BOLD point-size))
+                           (.drawString text x y))]
+      buffered-image))
+  ([image text x y]
+    (draw-text image text x y 20)))
+
+(defn unicode-range->string
+  [s e]
+  (let [r  (range s e)
+        text (clojure.string/join (map #(Character/toString  (char %)) r))]
+    text))
+
 
 (defn view-tiles
   "View the tiles in a composit image"

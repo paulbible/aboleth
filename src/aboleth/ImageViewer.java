@@ -7,6 +7,7 @@ package aboleth;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Image;
+import java.awt.image.BufferedImage;
 
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
@@ -14,6 +15,7 @@ import javax.swing.JLabel;
 import javax.swing.JScrollPane;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
+
 
 import org.opencv.core.Mat;
 
@@ -31,6 +33,19 @@ public class ImageViewer {
         ImageProcessor imageProcessor = new ImageProcessor();
         Image loadedImage = imageProcessor.toBufferedImage(image);
         imageView.setIcon(new ImageIcon(loadedImage));
+        
+        frame.pack();
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+		
+	}
+	
+	//PWB added overload to display text 
+	public void show(BufferedImage image,String windowName){
+		setSystemLookAndFeel();
+		
+		JFrame frame = createJFrame(windowName);
+        imageView.setIcon(new ImageIcon(image));
         
         frame.pack();
         frame.setLocationRelativeTo(null);

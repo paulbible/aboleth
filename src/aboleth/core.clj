@@ -57,6 +57,35 @@
 (def letter-masks
   (map #(cv/get-letter-mask (str %) 2 2) 
        (seq "abcdefghijklmnopqrstuvwxyz")))
+
+(def unicode-masks
+  (map #(cv/get-letter-mask (str %) 2 2) 
+       (seq "\u0905\u092E\u0940\u0924\u093E\u092A")))
+
+(defn draw-unicode-test
+  [image]
+  (vis/view-image 
+    (vis/draw-text image "\u0905\u092E\u0940\u0924\u093E\u092A" 50 50)))
+
+
+(defn t-draw-unicode-w-size
+  [image]
+  (vis/view-image 
+    (vis/draw-text image "\u4E00\u9FFF\u092E\u0940\u0924\u093E\u092A" 50 50 45)))
+
+(defn t-draw-unicode-w-size-2
+  [image]
+  (vis/view-image 
+    (vis/draw-text image "\u4E00\u9FFF\u4E01\u4E02\u4E03\u4E45" 50 50 45)))
+
+
+(defn t-appent-n-unicodes
+  [image n ]
+  (let [text (vis/unicode-range->string (int \u4E00) (+ (int \u4E00) n))]
+    (vis/view-image 
+      (vis/draw-text image text 50 50 45))))
+
+
        
 (vis/view-image (second letter-masks)) 
 
@@ -141,7 +170,7 @@
 
 (defn t-k-means-2
   [k]
-  (let [post-image    (cv/laplace (cv/blur (cv/blur img-p8)))
+  (let [post-image    (cv/blur img-p8)
         sorted-images (cv/cluster-images
                         (cv/n-random-sub-images post-image a-mask 1000)
                         k)]
