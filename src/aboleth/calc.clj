@@ -5,17 +5,32 @@
   (:import [org.opencv.core
              Core CvType Scalar Mat Size Point Rect]))
 
-
 ;;;;;;;;;;;;;;;;;;;; Utilities
 (defn which
   "a function to mimic the r which function,
    index of values that evaluation to true give function f"
   [vals f]
   (let [true-list (map f vals)
-        pairs (partition 2 (interleave vals (range (count vals))))
-        temp-index (map #(apply (fn [val idx]
-                                  (if (f val) idx)) %) pairs)]
-      (filter #(not (nil? %)) temp-index)))
+        temp-index (map (fn [val idx] (if val idx))
+                        true-list
+                        (range (count vals)))
+        res (filter #(not (nil? %)) temp-index)]
+      (if (empty? res)
+        nil
+        res)))
+
+(defn first-where
+  "finds the index of the first value where the function is true"
+  [vals f]
+  (count (take-while #(not (f %))
+                     vals)))
+
+(defn first-where-rev
+  "finds the index of the first value where the function is true"
+  [vals f]
+  (let [idx (count (take-while #(not (f %))
+                               (reverse vals)))]
+    (- (count vals) idx)))
 
 (defn list->func [vals]
   "Takes a list of values and returns a function, f(i) = val[i]"

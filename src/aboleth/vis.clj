@@ -15,8 +15,11 @@
 
 (defn view 
   "view an incanter plot (JChart)"
-  [chart]
-  (icore/view chart))
+  [obj]
+  (if
+    (instance? org.opencv.core.Mat obj)
+    (view-image obj)
+    (icore/view obj)))
 
 (defn view-chart
   "view an incanter plot (JChart)"

@@ -67,7 +67,6 @@
   (vis/view-image 
     (vis/draw-text image "\u0905\u092E\u0940\u0924\u093E\u092A" 50 50)))
 
-
 (defn t-draw-unicode-w-size
   [image]
   (vis/view-image 
@@ -87,7 +86,9 @@
 
 
        
-(vis/view-image (second letter-masks)) 
+(vis/view-image (second letter-masks))
+(vis/view (second letter-masks))
+
 
 
 ;;;;;;;;;;;;;; Tests
@@ -226,6 +227,7 @@
 
 (def laplace
   (-> img-p8
+    (cv/blur)
     (cv/laplace)))
 
 (def train-points
@@ -257,8 +259,6 @@
       (cv/draw-rect use-img x1 y1 x2 y2 "blue"))))
 
 
-
-
 (defn t-new-clip
   [img]
   (let [use-img (cv/laplace img)
@@ -271,11 +271,25 @@
         (vis/signal-plot cms))
       (vis/view-image use-img))))
 
+(def row-mean-lp
+  (cv/row-means laplace))
 
+(def row-mean-8
+  (cv/row-means img-p8))
 
+(def smooth-rm-lp
+  (calc/sma 5 row-mean-lp))
 
+(def dt1-row-mean-lp
+  (calc/nth-derivative smooth-rm-lp 1))
 
-
+(defn t-find-good-lines
+  []
+  (let [sma10 (calc/sma 10 row-mean-8)
+         dt1   (calc/nth-derivative sma10 1)]
+      (vis/view-chart
+        (-> (vis/signal-plot sma10)
+	       (vis/add-signal dt1)))))
 
 
 ;;;;;;;;;;;;;;;; Commented out
