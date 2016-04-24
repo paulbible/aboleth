@@ -13,14 +13,6 @@
           java.lang.String
           java.lang.Character))
 
-(defn view 
-  "view an incanter plot (JChart)"
-  [obj]
-  (if
-    (instance? org.opencv.core.Mat obj)
-    (view-image obj)
-    (icore/view obj)))
-
 (defn view-chart
   "view an incanter plot (JChart)"
   [chart]
@@ -32,6 +24,14 @@
   (let [viewer (aboleth.ImageViewer.)]
     (doto viewer  
       (.show mat "Image"))))
+
+(defn view 
+  "view an incanter plot (JChart)"
+  [obj]
+  (if
+    (instance? org.opencv.core.Mat obj)
+    (view-image obj)
+    (icore/view obj)))
 
 (defn draw-text
   "draw text on the buffered image (java side)

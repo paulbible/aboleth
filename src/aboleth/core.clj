@@ -32,7 +32,7 @@
   "resources/data/test.png"
   (-> (cv/blur (cv/col->gray img-p9))
     (cv/laplace)
-    (cv/threshold 90)))  
+    (cv/threshold 90)))
 
 (def trim-8 
   (cv/imread "resources/data/test-8.png"))
@@ -53,6 +53,8 @@
   (cv/get-letter-mask "a" 2 2))
   
 (vis/view-image a-mask)
+
+;; (vis/view-image (cv/get-letter-mask "a" 20 20))
 
 (def letter-masks
   (map #(cv/get-letter-mask (str %) 2 2) 
@@ -77,7 +79,6 @@
   (vis/view-image 
     (vis/draw-text image "\u4E00\u9FFF\u4E01\u4E02\u4E03\u4E45" 50 50 45)))
 
-
 (defn t-appent-n-unicodes
   [image n ]
   (let [text (vis/unicode-range->string (int \u4E00) (+ (int \u4E00) n))]
@@ -86,9 +87,7 @@
 
 
        
-(vis/view-image (second letter-masks))
 (vis/view (second letter-masks))
-
 
 
 ;;;;;;;;;;;;;; Tests
@@ -277,19 +276,63 @@
 (def row-mean-8
   (cv/row-means img-p8))
 
+(def row-mean-9
+  (cv/row-means img-p9))
+
 (def smooth-rm-lp
   (calc/sma 5 row-mean-lp))
 
 (def dt1-row-mean-lp
   (calc/nth-derivative smooth-rm-lp 1))
 
+
+(def laplace-8
+  (-> img-p8
+    (cv/blur)
+    (cv/laplace)))
+
+(def laplace-9
+  (-> img-p9
+    (cv/blur)
+    (cv/laplace)))
+
+(def row-mean-lp-9
+  (cv/row-means laplace-9))
+
+
 (defn t-find-good-lines
-  []
-  (let [sma10 (calc/sma 10 row-mean-8)
-         dt1   (calc/nth-derivative sma10 1)]
+  ([]
+    (let [sma10 (calc/sma 10 row-mean-8)
+          dt1   (calc/nth-derivative sma10 1)]
       (vis/view-chart
         (-> (vis/signal-plot sma10)
-	       (vis/add-signal dt1)))))
+          (vis/add-signal dt1)))))
+  ([in-row-mean]
+    (let [sma10 (calc/sma 30 in-row-mean)
+          dt1   (calc/nth-derivative sma10 1)
+          var-dt1 (calc/smv 30 dt1)]
+      (vis/view-chart
+        (-> (vis/signal-plot sma10)
+          (vis/add-signal dt1))))))
+
+
+(defn t-find-row-clip-lines
+  ([img lp-img lp-row-means]
+  (let [period 30
+        n-rows (- (count lp-row-means) period)
+        sma (calc/sma period lp-row-means)
+        quarter (int (* 0.25 (count lp-row-means)))
+        top-index (calc/which-min (take quarter sma))
+        bottom-index (+ (- n-rows quarter) (calc/which-min (take-last quarter sma)))]
+    (do
+      (prn top-index)
+      (prn bottom-index)
+      (vis/view
+        (-> img 
+          (cv/draw-h-line top-index)
+          (cv/draw-h-line bottom-index)))))))
+
+
 
 
 ;;;;;;;;;;;;;;;; Commented out
@@ -348,7 +391,7 @@
 (cv/imwrite
   "resources/data/laplace.png" img-laplace)
 
-(vis/view
+(vis/view-chart
   (-> (vis/signal-plot col-means)
     (vis/add-signal sma-5-all-c)))
 

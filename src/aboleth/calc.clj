@@ -7,10 +7,10 @@
 
 ;;;;;;;;;;;;;;;;;;;; Utilities
 (defn which
-  "a function to mimic the r which function,
-   index of values that evaluation to true give function f"
-  [vals f]
-  (let [true-list (map f vals)
+  "a function to mimic the r 'which' function,
+   returns the index of values where the predicate evaluates to true"
+  [vals pred]
+  (let [true-list (map pred vals)
         temp-index (map (fn [val idx] (if val idx))
                         true-list
                         (range (count vals)))
@@ -20,17 +20,23 @@
         res)))
 
 (defn first-where
-  "finds the index of the first value where the function is true"
-  [vals f]
-  (count (take-while #(not (f %))
+  "finds the index of the first value where the predicate is true"
+  [vals pred]
+  (count (take-while #(not (pred %))
                      vals)))
 
-(defn first-where-rev
-  "finds the index of the first value where the function is true"
+(defn last-where
+  "finds the index of the last value where the predicate is true"
   [vals f]
   (let [idx (count (take-while #(not (f %))
                                (reverse vals)))]
     (- (count vals) idx)))
+
+(defn which-min
+  "finds the index of the lowest value in a list"
+  [vals]
+  (let [min-val (apply min vals)]
+    (first-where vals #(= % min-val))))
 
 (defn list->func [vals]
   "Takes a list of values and returns a function, f(i) = val[i]"
@@ -65,9 +71,14 @@
 
 ;;;;;;;;;;;;;;;;;;;; smoothing
 (defn sma
-  "a function to calculate the simpel moving aveage of a list of values"
+  "a function to calculate the simple moving aveage of a list of values"
   [period vals]
   (izoo/roll-mean period vals))
+
+(defn smv
+  "a function to calculate the simple moving variance of a list of values"
+  [period vals]
+  (izoo/roll-apply istats/variance period vals))
 
 
 ;;;;;;;;;;;;;;;;;;;; slopes and derivatives
