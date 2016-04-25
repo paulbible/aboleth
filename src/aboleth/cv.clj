@@ -482,6 +482,10 @@
     (= "white" col-str) (Scalar. 255 255 255)
     :else (Scalar. 0     0   0)))
 
+(defn point
+  [x y]
+  (Point. x y))
+
 (defn draw-line
   "draw a line between p1 and p2"
   [img p1 p2]
@@ -489,10 +493,6 @@
     (do
       (Imgproc/line dst p1 p2 (Scalar. 255 0 0) 1)
       dst)))
-
-(defn point
-  [x y]
-  (Point. x y))
 
 (defn draw-line!
   "draw a line on the image as a side effect, modify in place"
@@ -511,7 +511,9 @@
 (defn draw-h-line!
   "draw a horizonalt line on the img as a side effect, modify in place"
   [img y]
-  (draw-h-line img y))
+  (draw-line! img 
+             (Point. 0 y)
+             (Point. (.cols img) y)))
 
 (defn draw-h-lines!
   "Draw horizontal lines at a list of rows as a side effect, modify in place"
@@ -528,6 +530,38 @@
       img-tmp
       (recur (draw-h-line img-tmp (first ys-tmp))
              (rest ys-tmp)
+             (dec n)))))
+
+
+(defn draw-v-line 
+  "Draw a verticle line returns an image with the line drawn"
+  [img x]
+  (draw-line img 
+             (Point. x 0)
+             (Point. x (.rows img))))
+
+(defn draw-v-line!
+  "Draw a verticle line returns an image with the line drawn"
+  [img x]
+  (draw-line! img 
+             (Point. x 0)
+             (Point. x (.rows img))))
+
+(defn draw-v-lines!
+  "Draw verticle lines at a list of columns as a side effect, modify in place"
+  [img col-indexes]
+  (map #(draw-v-line! img %) col-indexes))
+
+(defn draw-v-lines
+  "Draw verticle lines at a list of rows"
+  [img xs]
+  (loop [img-tmp img
+         xs-tmp  xs
+         n       (count xs)]
+    (if (zero? n)
+      img-tmp
+      (recur (draw-v-line img-tmp (first xs-tmp))
+             (rest xs-tmp)
              (dec n)))))
 
 
@@ -629,7 +663,7 @@
   [src nrow]
   (let [row-slice (.row src nrow)]
     (calc/mean
-      (pmap #(aget (.get row-slice 0 %) 0) 
+      (map #(aget (.get row-slice 0 %) 0) 
             (range (.cols row-slice))))))
 
 (defn col-mean
@@ -637,17 +671,26 @@
   [src ncol]
   (let [col-slice (.col src ncol)]
     (calc/mean
-      (pmap #(aget (.get col-slice % 0) 0)
+      (map #(aget (.get col-slice % 0) 0)
             (range (.cols col-slice))))))
+
+(defn col-mean-2
+  "get the mean of a col of pixels in the image"
+  [src ncol]
+  (let [col-slice (.col src ncol)
+        mean-vec  (Mat.)]
+    (do
+      (Core/reduce src mean-vec 0 Core/REDUCE_AVG CvType/CV_32F)
+      mean-vec)))
 
 (defn row-means
   "Calculate a list of row means
    from 0 to nrows or a range"
   ([img start end]
-    (pmap #(row-mean img %) 
+    (map #(row-mean img %) 
           (range start end)))
   ([img nrows]
-    (pmap #(row-mean img %) 
+    (map #(row-mean img %) 
           (range nrows)))
   ([img]
     (row-means img 0 (.rows img))))
@@ -656,10 +699,10 @@
   "Calculate a list of col means
     from 0 to ncols or a range"
   ([img ncols]
-    (pmap #(col-mean img %) 
+    (map #(col-mean img %) 
           (range ncols)))
   ([img start end]
-    (pmap #(col-mean img %) 
+    (map #(col-mean img %) 
           (range start end)))
   ([img]
     (col-means img 0 (.cols img))))

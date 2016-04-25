@@ -333,6 +333,33 @@
           (cv/draw-h-line bottom-index)))))))
 
 
+(def col-mean-lp
+  (cv/col-means laplace-8))
+
+(def col-mean-lp-9
+  (cv/col-means laplace-9))
+
+
+(def col-mean-th
+  (cv/col-means (cv/threshold img-p8 125)))
+
+
+
+(defn t-find-col-clip-lines
+  ([img lp-img lp-col-means]
+    (let [period 20
+          n-cols (- (count lp-col-means) period)
+          sma (calc/sma period lp-col-means)
+          quarter (int (* 0.25 (count lp-col-means)))
+          left-index (calc/which-min (take quarter sma))
+          right-index (+ (- n-cols quarter) (calc/which-min (take-last quarter sma)))]
+      (do
+        (vis/view (vis/signal-plot sma))
+        (prn left-index)
+        (prn right-index)
+        (vis/view (cv/draw-v-lines lp-img (list left-index right-index)))))))
+
+
 
 
 ;;;;;;;;;;;;;;;; Commented out
