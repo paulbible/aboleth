@@ -359,9 +359,6 @@
         (prn right-index)
         (vis/view (cv/draw-v-lines lp-img (list left-index right-index)))))))
 
-
-
-
 ;;;;;;;;;;;;;;;; Commented out
 (comment
   

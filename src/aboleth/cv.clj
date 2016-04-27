@@ -666,6 +666,33 @@
       (map #(aget (.get row-slice 0 %) 0) 
             (range (.cols row-slice))))))
 
+
+(defn col-means-test
+  "get the mean of a col of pixels in the image, using cv reduce"
+  [src channel]
+  (let [len       (.width src)
+        n-channels (.channels src)
+        fake      (prn n-channels)
+        mean-vec  (Mat.)
+        raw-seq   (do
+                    (Core/reduce src mean-vec 0 Core/REDUCE_AVG CvType/CV_32F)
+                    (map #(.get mean-vec 0 %) ;; get value in the cv Mat
+                         (range len)))]
+    (map #(aget % channel) raw-seq)))
+
+(defn row-means-test
+  "get the mean of a row of pixels in the image, using cv reduce"
+  [src channel]
+  (let [len       (.width src)
+        n-channels (.channels src)
+        fake      (prn n-channels)
+        mean-vec  (Mat.)
+        raw-seq   (do
+                    (Core/reduce src mean-vec 1 Core/REDUCE_AVG CvType/CV_32F)
+                    (map #(.get mean-vec % 0) ;; get value in the cv Mat
+                         (range len)))]
+    (map #(aget % channel) raw-seq)))
+
 (defn col-mean
   "get the mean of a col of pixels in the image"
   [src ncol]
@@ -673,15 +700,6 @@
     (calc/mean
       (map #(aget (.get col-slice % 0) 0)
             (range (.cols col-slice))))))
-
-(defn col-mean-2
-  "get the mean of a col of pixels in the image"
-  [src ncol]
-  (let [col-slice (.col src ncol)
-        mean-vec  (Mat.)]
-    (do
-      (Core/reduce src mean-vec 0 Core/REDUCE_AVG CvType/CV_32F)
-      mean-vec)))
 
 (defn row-means
   "Calculate a list of row means
