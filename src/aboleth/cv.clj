@@ -11,8 +11,12 @@
 ;;;;;;;;;;;;;;;;;;;; Utility
 (defn imread
   "returns a cv Mat of the image at fname"
-  [fname] 
-  (Imgcodecs/imread fname))
+  ([fname]
+    (Imgcodecs/imread fname))
+  ([fname color-code]
+    (cond 
+      (= color-code 1) (imread fname)
+      (= color-code 0) (Imgcodecs/imread fname Imgcodecs/IMREAD_GRAYSCALE))))
 
 (defn imwrite
   "writes the image Mat to fname"
@@ -338,7 +342,9 @@
     (= 1 cluster) (Scalar. 255     0    0)
     (= 2 cluster) (Scalar.   0   255    0)
     (= 3 cluster) (Scalar.   0     0  255)
-    (= 4 cluster) (Scalar. 255     0  255)))
+    (= 4 cluster) (Scalar. 255     0  255)
+    (= 5 cluster) (Scalar. 125     0  255)
+    (= 6 cluster) (Scalar. 255     125  125)))
 
 (defn mark-cluster
   [image mask pos k]
@@ -658,72 +664,55 @@
   (Core/mean img))
 
 ;;
-(defn row-mean
-  "get the mean of a row of pixels in the image"
-  [src nrow]
-  (let [row-slice (.row src nrow)]
-    (calc/mean
-      (map #(aget (.get row-slice 0 %) 0) 
-            (range (.cols row-slice))))))
-
-
-(defn col-means-test
+(defn col-means
   "get the mean of a col of pixels in the image, using cv reduce"
-  [src channel]
-  (let [len       (.width src)
-        n-channels (.channels src)
-        fake      (prn n-channels)
-        mean-vec  (Mat.)
-        raw-seq   (do
-                    (Core/reduce src mean-vec 0 Core/REDUCE_AVG CvType/CV_32F)
-                    (map #(.get mean-vec 0 %) ;; get value in the cv Mat
-                         (range len)))]
-    (map #(aget % channel) raw-seq)))
+  ([src channel]
+    (let [len       (.width src)
+          n-channels (.channels src)
+          use-channel (if (> channel (dec n-channels))
+                        (dec n-channels)
+                        channel)
+          mean-vec  (Mat.)
+          raw-seq   (do
+                      (Core/reduce src mean-vec 0 Core/REDUCE_AVG CvType/CV_32F)
+                      (map #(.get mean-vec 0 %) ;; get value in the cv Mat
+                           (range len)))]
+      (map #(aget % use-channel) raw-seq)))
+  ([src]
+    (col-means src 0)))
 
-(defn row-means-test
+(defn row-means
   "get the mean of a row of pixels in the image, using cv reduce"
-  [src channel]
-  (let [len       (.width src)
+  ([src channel]
+  (let [len       (.height src)
         n-channels (.channels src)
-        fake      (prn n-channels)
+        use-channel (if (> channel (dec n-channels))
+                        (dec n-channels)
+                        channel)
         mean-vec  (Mat.)
         raw-seq   (do
                     (Core/reduce src mean-vec 1 Core/REDUCE_AVG CvType/CV_32F)
                     (map #(.get mean-vec % 0) ;; get value in the cv Mat
                          (range len)))]
     (map #(aget % channel) raw-seq)))
+  ([src]
+    (row-means src 0)))
 
-(defn col-mean
-  "get the mean of a col of pixels in the image"
-  [src ncol]
-  (let [col-slice (.col src ncol)]
-    (calc/mean
-      (map #(aget (.get col-slice % 0) 0)
-            (range (.cols col-slice))))))
-
-(defn row-means
-  "Calculate a list of row means
-   from 0 to nrows or a range"
-  ([img start end]
-    (map #(row-mean img %) 
-          (range start end)))
-  ([img nrows]
-    (map #(row-mean img %) 
-          (range nrows)))
-  ([img]
-    (row-means img 0 (.rows img))))
-
-(defn col-means
-  "Calculate a list of col means
-    from 0 to ncols or a range"
-  ([img ncols]
-    (map #(col-mean img %) 
-          (range ncols)))
-  ([img start end]
-    (map #(col-mean img %) 
-          (range start end)))
-  ([img]
-    (col-means img 0 (.cols img))))
+;(defn row-mean
+;  "get the mean of a row of pixels in the image"
+;  [src nrow]
+;  (let [row-slice (.row src nrow)]
+;    (calc/mean
+;      (map #(aget (.get row-slice 0 %) 0) 
+;            (range (.cols row-slice))))))
+;
+;(defn col-mean
+;  "get the mean of a col of pixels in the image"
+;  [src ncol]
+;  (let [col-slice (.col src ncol)]
+;    (calc/mean
+;      (map #(aget (.get col-slice % 0) 0)
+;            (range (.cols col-slice))))))
 
 
 ;;;;;;;;;;;;;;;;;;;; pre-processing

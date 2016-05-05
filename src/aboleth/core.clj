@@ -3,7 +3,6 @@
             [aboleth.cv :as cv]
             [aboleth.calc :as calc]))
 
-
 ;;;;;;;;;;;;;;;;;;;; images
 ;; def file resources
 (def page-8-fname "resources/data/page_8.jpg")
@@ -222,6 +221,21 @@
      (vis/view-image
        (cv/mark-clusters
              img-p8 a-mask test-points labels))))
+
+(defn t-svm-3
+  [img k]
+  (let [train-points (cv/n-random-sub-images img a-mask 500)
+        c-labels      (cv/kmeans train-points k)
+        svm           (cv/svm train-points c-labels) 
+        test-points (take 10000 
+                          (repeatedly #(cv/random-tile-pos img a-mask)))
+        tiles       (map #(cv/sub-image-at img a-mask %) test-points)
+        labels      (map #(cv/svm-predict-image 
+                            svm (cv/col->gray %)) tiles)]
+     (vis/view-image
+       (cv/mark-clusters
+             img a-mask test-points labels))))
+
 
 
 (def laplace
